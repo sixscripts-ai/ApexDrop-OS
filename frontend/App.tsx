@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Terminal, Search, Cpu, AlertCircle } from 'lucide-react';
+import { Terminal, Search, Cpu, AlertCircle, Download } from 'lucide-react';
 import { runOrchestrator } from './services/geminiService.ts';
 import { AppStatus, OrchestratorResponse } from './types.ts';
 import { TerminalLoader } from './components/TerminalLoader.tsx';
@@ -29,6 +29,84 @@ const App: React.FC = () => {
       setErrorMsg(err.message || 'An unknown error occurred during execution.');
     }
   }, [seedInput]);
+
+  const handleExport = useCallback(() => {
+    if (!data) return;
+
+    const markdownContent = `
+# ApexDrop-OS Execution Report
+**Seed Input:** ${seedInput}
+**Date:** ${new Date().toLocaleDateString()}
+
+---
+
+## [Phase 1: The Product Verdict]
+
+**Product Identity:** ${data.phase1.productIdentity}
+**Niche:** ${data.phase1.niche}
+
+### Trend & Momentum Analysis
+* **Momentum Score:** ${data.phase1.trendAnalysis.momentumScore}/10
+* **Trend Type:** ${data.phase1.trendAnalysis.trendType}
+* **Peak Timing:** ${data.phase1.trendAnalysis.peakTiming}
+* **Market Status:** ${data.phase1.trendAnalysis.marketStatus}
+* **Competition Density:** ${data.phase1.trendAnalysis.competitionDensity}
+* **Sustainability:** ${data.phase1.trendAnalysis.sustainabilityAnalysis}
+
+### Supplier & Unit Economics Breakdown
+* **COGS:** $${data.phase1.supplierEconomics.cogs.toFixed(2)}
+* **Retail Price:** $${data.phase1.supplierEconomics.retailPrice.toFixed(2)}
+* **Net Margin:** ${data.phase1.supplierEconomics.netMargin}%
+* **Analysis:** ${data.phase1.supplierEconomics.breakdownText}
+
+### Logistics & Risk Assessment
+* **Primary Supplier:** ${data.phase1.logistics.primarySupplier}
+* **Shipping Window:** ${data.phase1.logistics.shippingWindow}
+* **Return/Defect Risk:** ${data.phase1.logistics.returnRisk}
+* **Assessment:** ${data.phase1.logistics.assessmentText}
+
+### Market & Viability Score
+* **Score:** ${data.phase1.viabilityScore}/10
+* **Details:** ${data.phase1.viabilityText}
+
+---
+
+## [Phase 2: The Go-To-Market Blueprint]
+
+### Target Audience Persona & Core Angles
+* **Persona:** ${data.phase2.targetAudience.persona}
+* **Core Angles:**
+${data.phase2.targetAudience.coreAngles.map(angle => `  - ${angle}`).join('\n')}
+
+### Direct-Response Copy & Creative Scripts
+* **SEO Title:** ${data.phase2.copywriting.seoTitle}
+* **Bullet Points:**
+${data.phase2.copywriting.bulletPoints.map(bp => `  - ${bp}`).join('\n')}
+* **Video Hook Script:** 
+> "${data.phase2.copywriting.videoHookScript}"
+
+### Offer Structure & AOV Boosters
+* **Structure:** ${data.phase2.offerArchitecture.structure}
+* **AOV Boosters:**
+${data.phase2.offerArchitecture.aovBoosters.map(booster => `  - ${booster}`).join('\n')}
+
+### 90-Day Omnichannel Action Plan & Testing Framework
+* **Phase 1 (3-Day Test):** ${data.phase2.actionPlan.day1to3Test}
+* **Phase 2 (Day 4-90 Scale):** ${data.phase2.actionPlan.day4to90Scale}
+* **Budget Allocation Matrix:**
+${data.phase2.actionPlan.budgetMatrix.map(item => `  - ${item.channel}: ${item.allocationPercentage}%`).join('\n')}
+    `.trim();
+
+    const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ApexDrop_Report_${seedInput.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [data, seedInput]);
 
   return (
     <div className="min-h-screen bg-os-bg text-os-text p-4 md:p-8 selection:bg-os-accent selection:text-os-bg">
@@ -122,20 +200,29 @@ const App: React.FC = () => {
         {/* Results Dashboard */}
         {status === 'success' && data && (
           <div className="pb-20">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
               <div className="font-mono text-sm text-os-accent flex items-center gap-2">
                 <span className="w-2 h-2 bg-os-accent rounded-full animate-pulse"></span>
                 SEQUENCE_COMPLETE
               </div>
-              <button 
-                onClick={() => {
-                  setStatus('idle');
-                  setSeedInput('');
-                }}
-                className="text-sm font-mono text-os-muted hover:text-os-text transition-colors border border-os-border px-4 py-2 rounded bg-os-panel hover:bg-os-border"
-              >
-                [ RESET_SYSTEM ]
-              </button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={handleExport}
+                  className="text-sm font-mono text-os-accent hover:text-os-bg transition-colors border border-os-accent px-4 py-2 rounded bg-os-panel hover:bg-os-accent flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  [ EXPORT_REPORT ]
+                </button>
+                <button 
+                  onClick={() => {
+                    setStatus('idle');
+                    setSeedInput('');
+                  }}
+                  className="text-sm font-mono text-os-muted hover:text-os-text transition-colors border border-os-border px-4 py-2 rounded bg-os-panel hover:bg-os-border"
+                >
+                  [ RESET_SYSTEM ]
+                </button>
+              </div>
             </div>
             
             <Phase1Report data={data.phase1} />
