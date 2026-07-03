@@ -1,4 +1,7 @@
 {
   "name": "ApexDrop-OS",
-  "description": "A hyper-autonomous Multi-Agent Orchestrator for dropshipping product research, trending niche discovery, and marketing deployment, focusing on Amazon and Temu."
+  "description": "A hyper-autonomous Multi-Agent Orchestrator for dropshipping. Features real-time web grounding, multi-product discovery, AI image generation, interactive calculators, and advanced data visualization.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
